@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="An interactive antique chart of the imaginary Isle of Alderwake, with surveys, waypoints, a gazetteer and an expedition journal.">
+  <title>The Isle of Alderwake — Cartographer's Table</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Cinzel:wght@400;500;600;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="table-grain" aria-hidden="true"></div>
+  <div class="table">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 60 60" aria-hidden="true">
+          <circle cx="30" cy="30" r="25" fill="none" stroke="currentColor" stroke-width="1.2"/>
+          <circle cx="30" cy="30" r="18" fill="none" stroke="currentColor" stroke-width=".7" stroke-dasharray="2 4"/>
+          <path d="M30 8 L34 26 L52 30 L34 34 L30 52 L26 34 L8 30 L26 26 Z" fill="none" stroke="currentColor" stroke-width="1"/>
+          <path d="M30 13 L33 27 L30 30 L27 27 Z" fill="currentColor"/>
+          <circle cx="30" cy="30" r="2.2" fill="currentColor"/>
+        </svg>
+        <div>
+          <p class="brand-kicker">The Hydrographic Office · Folio XII</p>
+          <h1>The Isle of Alderwake</h1>
+        </div>
+      </div>
+      <div class="chart-tools" role="group" aria-label="Chart display controls">
+        <button type="button" id="labelsToggle" class="tool-button" aria-pressed="true">
+          <span class="tool-dot" aria-hidden="true"></span> Place names
+        </button>
+        <button type="button" id="gridToggle" class="tool-button" aria-pressed="true">
+          <span class="tool-dot" aria-hidden="true"></span> Graticule
+        </button>
+        <button type="button" id="waypointToggle" class="tool-button tool-button-strong" aria-pressed="false">
+          <span class="tool-pin" aria-hidden="true"></span>
+          <span class="tool-label">Plant a waypoint</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="survey-table">
+      <section class="chart-column" aria-label="Survey chart">
+        <div class="map-frame">
+          <div class="frame-corner corner-nw" aria-hidden="true"></div>
+          <div class="frame-corner corner-ne" aria-hidden="true"></div>
+          <div class="frame-corner corner-sw" aria-hidden="true"></div>
+          <div class="frame-corner corner-se" aria-hidden="true"></div>
+
+          <div class="map-viewport" id="mapScroller">
+            <div class="map-sheet">
+              <svg id="mapSvg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="mapTitle mapDescription">
+                <title id="mapTitle">A chart of the Isle of Alderwake</title>
+                <desc id="mapDescription">A hand-drawn parchment map with five named regions around a central survey camp. Select a region to read its lore and resources, or plant waypoints on the chart.</desc>
+                <defs>
+                  <path id="islandShape" d="M 512 74 C 556 66 603 76 646 94 C 682 109 704 132 738 145 C 772 158 802 181 808 211 C 815 240 799 264 814 290 C 831 319 859 329 865 359 C 872 390 851 413 853 444 C 856 477 832 500 806 517 C 790 528 787 551 773 571 C 754 599 720 612 688 605 C 663 600 650 621 625 630 C 593 642 567 626 539 632 C 511 638 495 658 464 655 C 432 652 416 634 388 628 C 358 621 328 628 302 611 C 278 595 272 571 254 552 C 232 529 208 514 201 487 C 193 458 209 435 202 410 C 194 382 171 364 170 336 C 169 308 192 289 199 264 C 206 239 195 214 208 190 C 222 164 252 155 274 138 C 298 119 324 107 353 103 C 387 98 415 97 443 86 C 465 77 486 81 512 74 Z"/>
+                  <clipPath id="islandClip">
+                    <use href="#islandShape"/>
+                  </clipPath>
+                  <filter id="inkRough" x="-5%" y="-5%" width="110%" height="110%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="11" result="noise"/>
+                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+                  </filter>
+                  <filter id="softInk" x="-15%" y="-15%" width="130%" height="130%">
+                    <feGaussianBlur stdDeviation="2.1" result="blur"/>
+                    <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.24 0 0 0 0 0.19 0 0 0 0 0.12 0 0 0 .26 0"/>
+                  </filter>
+                  <pattern id="waterHatch" width="92" height="34" patternUnits="userSpaceOnUse">
+                    <path d="M 2 12 C 18 6 28 18 44 12 C 58 7 70 9 84 13" fill="none" stroke="#5d7d72" stroke-width=".65" opacity=".34"/>
+                    <path d="M 18 27 C 32 22 44 30 58 25 C 68 22 78 24 89 27" fill="none" stroke="#5d7d72" stroke-width=".5" opacity=".24"/>
+                  </pattern>
+                  <pattern id="marshHatch" width="14" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(7)">
+                    <path d="M 0 9 L 14 1" stroke="#6d8171" stroke-width=".7" opacity=".45"/>
+                  </pattern>
+                  <pattern id="downsHatch" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <circle cx="4" cy="5" r=".9" fill="#7d6a47" opacity=".45"/>
+                    <circle cx="15" cy="14" r=".7" fill="#7d6a47" opacity=".35"/>
+                  </pattern>
+                  <g id="treeMark">
+                    <path d="M0 0 L-6 11 L-3 11 L-8 21 L8 21 L3 11 L6 11 Z" fill="#61705a" stroke="#4b5a47" stroke-width=".7"/>
+                    <path d="M0 21 L0 27" stroke="#5f4b31" stroke-width="1.6"/>
+                  </g>
+                  <g id="mountainMark">
+                    <path d="M0 0 L16 30 L-16 30 Z" fill="#9a8462" stroke="#5e4b32" stroke-width="1"/>
+                    <path d="M0 0 L4 11 L1 9 L-2 13 L-5 10 L-9 16" fill="none" stroke="#5f4c32" stroke-width=".7"/>
+                    <path d="M9 17 L16 30 L2 30" fill="none" stroke="#5f4c32" stroke-width=".5" opacity=".55"/>
+                  </g>
+                  <g id="reedMark">
+                    <path d="M0 12 C-1 5 -4 2 -5 -2 M0 12 C1 4 4 1 5 -4 M0 12 C5 7 7 6 9 4" fill="none" stroke="#5e7161" stroke-width="1.1" stroke-linecap="round"/>
+                    <path d="M-8 13 L9 13" stroke="#596b5c" stroke-width=".7" opacity=".6"/>
+                  </g>
+                </defs>
+
+                <rect width="1000" height="700" fill="#aabfb4"/>
+                <rect width="1000" height="700" fill="url(#waterHatch)"/>
+                <rect x="20" y="20" width="960" height="660" fill="none" stroke="#5f5a42" stroke-width=".8" opacity=".5"/>
+
+                <g class="sea-decor" aria-hidden="true">
+                  <path d="M 42 180 C 84 168 110 180 146 172 C 174 166 190 170 214 176" fill="none" stroke="#627f76" stroke-width=".8" opacity=".5"/>
+                  <path d="M 823 76 C 856 66 880 78 912 70 C 934 65 950 69 968 76" fill="none" stroke="#627f76" stroke-width=".8" opacity=".45"/>
+                  <path d="M 760 640 C 798 628 824 640 860 632 C 888 626 910 631 934 639" fill="none" stroke="#627f76" stroke-width=".7" opacity=".45"/>
+                  <path d="M 70 430 C 104 420 122 429 148 424" fill="none" stroke="#627f76" stroke-width=".7" opacity=".4"/>
+                  <path d="M 894 202 C 924 194 944 201 966 196" fill="none" stroke="#627f76" stroke-width=".7" opacity=".35"/>
+                  <path d="M 100 520 C 160 500 225 510 280 490" fill="none" stroke="#5e4c31" stroke-width="1" stroke-dasharray="3 6" opacity=".45"/>
+                  <path d="M 250 515 C 300 500 338 505 380 493" fill="none" stroke="#5e4c31" stroke-width="1" stroke-dasharray="3 6" opacity=".35"/>
+                  <g transform="translate(212 505) rotate(-9)">
+                    <path d="M0 0 L36 7 L38 12 L2 7 Z" fill="#d6c49e" stroke="#5d4a2f" stroke-width=".8"/>
+                    <path d="M18 1 L20 -13 L22 2 Z" fill="#e6d7b6" stroke="#5d4a2f" stroke-width=".7"/>
+                    <path d="M21 -13 L33 -6 L22 -1 Z" fill="#b9a47c" stroke="#5d4a2f" stroke-width=".7"/>
+                    <path d="M1 8 L37 13" stroke="#5d4a2f" stroke-width=".7"/>
+                  </g>
+                </g>
+
+                <use href="#islandShape" fill="#d3bd93" opacity=".55" transform="translate(8 10)" filter="url(#softInk)"/>
+                <use href="#islandShape" fill="#e8d5ad" stroke="#5f4a2e" stroke-width="2.6" filter="url(#inkRough)"/>
+                <use href="#islandShape" fill="none" stroke="#6f8d7d" stroke-width="1.2" stroke-dasharray="1 5" opacity=".7" transform="translate(500 350) scale(.975) translate(-500 -350)"/>
+
+                <g clip-path="url(#islandClip)">
+                  <g class="region" data-region="cinder" tabindex="0" role="button" aria-label="Cinder Peaks, smoking highlands. Open survey.">
+                    <title>Cinder Peaks</title>
+                    <path class="region-fill" d="M 198 247 C 224 218 238 185 272 165 C 316 137 349 123 392 110 C 444 94 482 84 526 86 C 575 88 617 94 661 113 C 700 130 729 152 762 174 C 783 188 799 203 806 226 C 812 249 793 263 768 274 C 718 297 676 288 634 284 C 596 280 557 269 520 270 C 479 271 455 288 414 285 C 373 282 335 266 298 273 C 266 279 239 273 218 265 C 207 260 199 255 198 247 Z" fill="#d8c49a"/>
+                  </g>
+                  <g class="region" data-region="wraithwood" tabindex="0" role="button" aria-label="Wraithwood, fog-bound forest. Open survey.">
+                    <title>Wraithwood</title>
+                    <path class="region-fill" d="M 178 334 C 195 311 211 288 239 279 C 277 267 318 281 351 280 C 390 279 418 287 449 292 C 475 296 505 283 531 298 C 545 307 543 332 536 351 C 527 377 507 389 496 411 C 485 435 475 458 449 470 C 421 483 392 481 366 489 C 338 497 317 513 290 511 C 260 508 237 493 226 472 C 212 447 214 425 205 404 C 195 380 166 357 178 334 Z" fill="#a8b09a"/>
+                  </g>
+                  <g class="region" data-region="hollow" tabindex="0" role="button" aria-label="Hollow Downs, chalk uplands. Open survey.">
+                    <title>Hollow Downs</title>
+                    <path class="region-fill" d="M 531 298 C 559 283 595 284 628 286 C 671 289 713 290 754 277 C 796 264 824 282 843 308 C 866 339 862 366 855 396 C 849 420 828 436 804 449 C 775 465 745 469 714 470 C 684 471 657 466 632 452 C 605 437 585 424 559 413 C 532 401 503 399 500 378 C 497 357 509 335 517 318 C 522 307 522 303 531 298 Z" fill="#dfcfaa"/>
+                  </g>
+                  <g class="region" data-region="saltmere" tabindex="0" role="button" aria-label="Saltmere Fen, brackish marshland. Open survey.">
+                    <title>Saltmere Fen</title>
+                    <path class="region-fill" d="M 285 512 C 311 512 337 495 365 489 C 394 482 422 483 450 471 C 479 458 488 436 501 416 C 514 396 537 401 560 412 C 587 425 608 439 633 453 C 659 468 683 469 706 475 C 723 480 731 497 725 520 C 718 549 699 568 682 590 C 663 614 642 626 609 632 C 575 638 547 639 514 644 C 483 649 455 656 425 648 C 394 640 373 624 348 610 C 321 595 292 587 278 565 C 267 547 270 527 285 512 Z" fill="#aabca8"/>
+                    <path d="M 260 500 L 710 500 L 730 660 L 260 660 Z" fill="url(#marshHatch)" opacity=".5"/>
+                  </g>
+                  <g class="region" data-region="ember" tabindex="0" role="button" aria-label="Ember Cape, lighthouse coast. Open survey.">
+                    <title>Ember Cape</title>
+                    <path class="region-fill" d="M 706 475 C 733 472 760 461 784 447 C 808 433 829 423 846 436 C 858 445 856 468 850 490 C 842 517 818 532 805 550 C 790 571 780 593 756 606 C 732 620 701 617 681 602 C 660 586 655 562 668 539 C 678 521 688 507 695 491 C 700 483 700 478 706 475 Z" fill="#cfae91"/>
+                    <path d="M 680 440 L 870 440 L 860 650 L 680 650 Z" fill="url(#downsHatch)" opacity=".5"/>
+                  </g>
+
+                  <g class="map-features" aria-hidden="true">
+                    <path d="M 340 285 C 367 260 389 242 417 215 C 444 188 471 166 504 154" fill="none" stroke="#59766c" stroke-width="2.2" opacity=".65"/>
+                    <path d="M 504 154 C 534 173 549 201 569 229 C 587 254 618 261 630 286" fill="none" stroke="#59766c" stroke-width="1.7" opacity=".55"/>
+                    <path d="M 597 398 C 584 423 580 449 566 470 C 551 493 540 521 529 548 C 521 568 500 588 475 604" fill="none" stroke="#59766c" stroke-width="1.7" opacity=".55"/>
+                    <path d="M 700 490 C 690 518 700 541 722 555 C 743 568 760 582 770 600" fill="none" stroke="#59766c" stroke-width="1.2" opacity=".45"/>
+
+                    <path d="M 470 527 C 485 503 512 492 535 470 C 560 446 589 430 618 416 C 646 402 668 379 693 367" fill="none" stroke="#6a5436" stroke-width="1.3" stroke-dasharray="2 5" opacity=".7"/>
+                    <path d="M 486 392 C 441 376 403 384 365 379 C 328 374 300 349 272 330" fill="none" stroke="#6a5436" stroke-width="1.1" stroke-dasharray="2 5" opacity=".6"/>
+
+                    <use href="#mountainMark" transform="translate(382 173) scale(.92)"/>
+                    <use href="#mountainMark" transform="translate(423 155) scale(1.08)"/>
+                    <use href="#mountainMark" transform="translate(469 181) scale(.78)"/>
+                    <use href="#mountainMark" transform="translate(602 168) scale(.86)"/>
+                    <use href="#mountainMark" transform="translate(651 186) scale(1.02)"/>
+                    <use href="#mountainMark" transform="translate(340 213) scale(.7)"/>
+
+                    <use href="#treeMark" transform="translate(270 354) scale(.95)"/>
+                    <use href="#treeMark" transform="translate(300 339) scale(.75)"/>
+                    <use href="#treeMark" transform="translate(322 371) scale(1.05)"/>
+                    <use href="#treeMark" transform="translate(352 349) scale(.85)"/>
+                    <use href="#treeMark" transform="translate(379 389) scale(1)"/>
+                    <use href="#treeMark" transform="translate(409 351) scale(.8)"/>
+                    <use href="#treeMark" transform="translate(441 396) scale(.95)"/>
+                    <use href="#treeMark" transform="translate(399 426) scale(.7)"/>
+                    <use href="#treeMark" transform="translate(458 351) scale(.72)"/>
+                    <use href="#treeMark" transform="translate(296 426) scale(.78)"/>
+
+                    <path d="M 590 345 C 611 332 633 341 650 332 C 671 321 689 330 708 326" fill="none" stroke="#8d7853" stroke-width="1.3" opacity=".6"/>
+                    <path d="M 580 410 C 607 399 626 408 648 401 C 670 395 694 399 716 393" fill="none" stroke="#8d7853" stroke-width="1" opacity=".5"/>
+                    <g transform="translate(659 349)">
+                      <path d="M0 30 L0 4 M0 17 L-14 28 M0 12 L12 24 M-14 28 L-20 28 M12 24 L18 24" stroke="#655338" stroke-width="2" fill="none"/>
+                      <circle r="2.5" fill="#655338"/>
+                    </g>
+
+                    <use href="#reedMark" transform="translate(392 581) scale(.95)"/>
+                    <use href="#reedMark" transform="translate(424 596) scale(.75)"/>
+                    <use href="#reedMark" transform="translate(454 570) scale(1.05)"/>
+                    <use href="#reedMark" transform="translate(497 606) scale(.85)"/>
+                    <use href="#reedMark" transform="translate(525 580) scale(.95)"/>
+                    <use href="#reedMark" transform="translate(558 600) scale(.75)"/>
+                    <use href="#reedMark" transform="translate(591 567) scale(1)"/>
+                    <use href="#reedMark" transform="translate(616 600) scale(.7)"/>
+                    <use href="#reedMark" transform="translate(348 612) scale(.8)"/>
+
+                    <g transform="translate(797 512)">
+                      <path d="M-7 23 L-5 0 L5 0 L7 23 Z" fill="#e5d4b3" stroke="#625037" stroke-width="1"/>
+                      <path d="M-6 7 L6 7 M-6 14 L6 14" stroke="#9b7d56" stroke-width="1.5"/>
+                      <rect x="-6" y="-5" width="12" height="6" fill="#8e5237" stroke="#625037" stroke-width=".8"/>
+                      <path d="M-8 -5 L0 -12 L8 -5 Z" fill="#65432c" stroke="#625037" stroke-width=".8"/>
+                      <path d="M8 -1 L18 -5 M8 2 L18 4" stroke="#8b6b44" stroke-width=".8"/>
+                    </g>
+
+                    <g transform="translate(500 430)">
+                      <path d="M-9 10 L-9 0 L0 -7 L9 0 L9 10 Z" fill="#e0cfae" stroke="#5f4b31" stroke-width="1.1"/>
+                      <path d="M-2 10 L-2 3 L3 3 L3 10" fill="#8f6b43" stroke="#5f4b31" stroke-width=".7"/>
+                      <path d="M0 -7 L0 -14 L7 -14 L7 -9" fill="#d8c39b" stroke="#5f4b31" stroke-width=".8"/>
+                      <circle r="2" fill="#8e5237"/>
+                    </g>
+
+                    <path d="M 505 108 C 528 115 554 114 576 124 C 601 135 615 150 621 169" fill="none" stroke="#70583a" stroke-width=".7" opacity=".4"/>
+                  </g>
+                </g>
+
+                <use href="#islandShape" fill="none" stroke="#57452d" stroke-width="1.6" filter="url(#inkRough)"/>
+
+                <g id="mapGrid" class="map-grid" aria-hidden="true">
+                  <line x1="125" y1="26" x2="125" y2="674"/>
+                  <line x1="250" y1="26" x2="250" y2="674"/>
+                  <line x1="375" y1="26" x2="375" y2="674"/>
+                  <line x1="500" y1="26" x2="500" y2="674"/>
+                  <line x1="625" y1="26" x2="625" y2="674"/>
+                  <line x1="750" y1="26" x2="750" y2="674"/>
+                  <line x1="875" y1="26" x2="875" y2="674"/>
+                  <line x1="26" y1="116" x2="974" y2="116"/>
+                  <line x1="26" y1="232" x2="974" y2="232"/>
+                  <line x1="26" y1="348" x2="974" y2="348"/>
+                  <line x1="26" y1="464" x2="974" y2="464"/>
+                  <line x1="26" y1="580" x2="974" y2="580"/>
+                  <text x="125" y="18" class="grid-label">58°W</text>
+                  <text x="250" y="18" class="grid-label">57°W</text>
+                  <text x="375" y="18" class="grid-label">56°W</text>
+                  <text x="500" y="18" class="grid-label">55°W</text>
+                  <text x="625" y="18" class="grid-label">54°W</text>
+                  <text x="750" y="18" class="grid-label">53°W</text>
+                  <text x="875" y="18" class="grid-label">52°W</text>
+                  <text x="984" y="120" class="grid-label grid-lat">21°N</text>
+                  <text x="984" y="236" class="grid-label grid-lat">20°N</text>
+                  <text x="984" y="352" class="grid-label grid-lat">19°N</text>
+                  <text x="984" y="468" class="grid-label grid-lat">18°N</text>
+                  <text x="984" y="584" class="grid-label grid-lat">17°N</text>
+                </g>
+
+                <g id="mapLabels" class="map-labels" aria-hidden="true">
+                  <text x="198" y="348" class="sea-name" transform="rotate(-76 198 348)">THE SUNDERED SEA</text>
+                  <text x="838" y="102" class="sea-name">GULL'S REACH</text>
+                  <text x="822" y="654" class="sea-name">THE OUTER DEEP</text>
+
+                  <text x="513" y="182" class="map-name">CINDER PEAKS</text>
+                  <text x="513" y="201" class="map-note">the smoking highlands</text>
+
+                  <text x="329" y="381" class="map-name">WRAITHWOOD</text>
+                  <text x="329" y="400" class="map-note">old growth &amp; tide fog</text>
+
+                  <text x="684" y="363" class="map-name">HOLLOW DOWNS</text>
+                  <text x="684" y="382" class="map-note">chalk, wind &amp; old stone</text>
+
+                  <text x="469" y="552" class="map-name">SALTMERE</text>
+                  <text x="469" y="571" class="map-note">the weeping fen</text>
+
+                  <text x="762" y="540" class="map-name">EMBER CAPE</text>
+                  <text x="762" y="559" class="map-note">keep the light</text>
+
+                  <text x="527" y="449" class="map-hand">survey camp</text>
+                  <path d="M 522 437 C 515 431 507 432 500 437" fill="none" stroke="#74552f" stroke-width=".8" opacity=".7"/>
+                  <text x="292" y="454" class="map-hand">the old road</text>
+                  <text x="342" y="600" class="map-hand">reeds &amp; soft ground</text>
+                  <text x="808" y="480" class="map-hand">light kept nightly</text>
+                </g>
+
+                <g class="chart-furniture" aria-hidden="true">
+                  <g class="map-compass" transform="translate(114 548)">
+                    <circle r="58" fill="#e5d3b0" opacity=".92" stroke="#67543a" stroke-width="1.2"/>
+                    <circle r="48" fill="none" stroke="#6d5a3d" stroke-width=".8" stroke-dasharray="2 4"/>
+                    <circle r="4.5" fill="#67543a"/>
+                    <path d="M0 -44 L7 -8 L44 0 L7 8 L0 44 L-7 8 L-44 0 L-7 -8 Z" fill="#c8b28b" stroke="#6b573a" stroke-width=".9"/>
+                    <path d="M0 -42 L0 42 M-42 0 L42 0" stroke="#6b573a" stroke-width=".6"/>
+                    <path d="M0 -31 L6 0 L0 7 Z" fill="#8b4b30"/>
+                    <path d="M0 31 L-6 0 L0 -7 Z" fill="#3f6056"/>
+                    <circle r="3" fill="#e5d3b0" stroke="#67543a" stroke-width="1"/>
+                    <text x="0" y="-64" class="compass-letter">N</text>
+                    <text x="67" y="4" class="compass-letter">E</text>
+                    <text x="0" y="76" class="compass-letter">S</text>
+                    <text x="-67" y="4" class="compass-letter">W</text>
+                  </g>
+
+                  <g class="scale-rule" transform="translate(382 648)">
+                    <text x="0" y="-8" class="scale-label">SCALE OF LEAGUES</text>
+                    <rect x="0" y="0" width="40" height="7" fill="#5f4b31"/>
+                    <rect x="40" y="0" width="40" height="7" fill="#e5d3b0" stroke="#5f4b31" stroke-width=".8"/>
+                    <rect x="80" y="0" width="40" height="7" fill="#5f4b31"/>
+                    <rect x="120" y="0" width="40" height="7" fill="#e5d3b0" stroke="#5f4b31" stroke-width=".8"/>
+                    <rect x="160" y="0" width="40" height="7" fill="#5f4b31"/>
+                    <text x="0" y="21" class="scale-num">0</text>
+                    <text x="78" y="21" class="scale-num">10</text>
+                    <text x="155" y="21" class="scale-num">20</text>
+                    <text x="194" y="21" class="scale-num">LEAGUES</text>
+                  </g>
+
+                  <g class="cartouche" transform="translate(44 42)">
+                    <rect width="352" height="124" fill="#eee0c2" stroke="#665036" stroke-width="1.3"/>
+                    <rect x="6" y="6" width="340" height="112" fill="none" stroke="#7b6547" stroke-width=".7"/>
+                    <rect x="10" y="10" width="332" height="104" fill="none" stroke="#7b6547" stroke-width=".4" stroke-dasharray="1 3"/>
+                    <text x="22" y="32" class="cartouche-kicker">HYDROGRAPHIC OFFICE · FOLIO XII</text>
+                    <text x="22" y="57" class="cartouche-of">A CHART <tspan font-style="italic">of</tspan></text>
+                    <text x="22" y="89" class="cartouche-title">ALDERWAKE</text>
+                    <text x="22" y="108" class="cartouche-sub">surveyed 1874 · longitude by chronometer</text>
+                    <circle cx="325" cy="87" r="22" fill="none" stroke="#7b6547" stroke-width=".8"/>
+                    <path d="M325 70 L329 83 L342 87 L329 91 L325 104 L321 91 L308 87 L321 83 Z" fill="none" stroke="#7b6547" stroke-width=".7"/>
+                    <circle cx="325" cy="87" r="2" fill="#7b6547"/>
+                  </g>
+
+                  <path d="M 890 360 C 900 352 908 352 916 356" fill="none" stroke="#627f76" stroke-width="1"/>
+                  <path d="M 894 370 C 904 364 914 364 924 368" fill="none" stroke="#627f76" stroke-width=".8"/>
+                  <rect x="14" y="14" width="972" height="672" fill="none" stroke="#5d4a2f" stroke-width="1.4"/>
+                  <rect x="22" y="22" width="956" height="656" fill="none" stroke="#7b6748" stroke-width=".5"/>
+                </g>
+
+                <g id="waypointLayer" class="waypoint-layer" aria-label="Placed waypoints"></g>
+              </svg>
+            </div>
+          </div>
+
+          <div class="placement-hint" id="placementHint" hidden>
+            <p class="hint-kicker">Waypoint mode</p>
+            <p class="hint-text">Click anywhere on the chart to plant your marker.</p>
+            <div class="hint-actions">
+              <button type="button" id="placeCenterBtn" class="mini-button">Place at centre</button>
+              <button type="button" id="cancelPlacementBtn" class="mini-button mini-quiet">Cancel</button>
+            </div>
+          </div>
+          <p class="pan-hint" aria-hidden="true">Drag to roam the chart →</p>
+        </div>
+
+        <div class="chart-strip">
+          <div class="strip-item">
+            <span class="strip-label">Cursor position</span>
+            <strong id="coordReadout">18° 18′ N · 55° 00′ W</strong>
+          </div>
+          <div class="strip-divider" aria-hidden="true"></div>
+          <div class="strip-item strip-big">
+            <span class="strip-label">Bearing from survey camp</span>
+            <strong id="chartBearing">Cinder Peaks · 013° · 24.6 leagues</strong>
+          </div>
+          <div class="strip-divider strip-divider-end" aria-hidden="true"></div>
+          <div class="strip-item strip-note">
+            <span class="strip-label">Edition</span>
+            <strong>First survey · 1874</strong>
+          </div>
+        </div>
+      </section>
+
+      <aside class="journal" aria-label="Field journal">
+        <div class="journal-head">
+          <p class="journal-kicker">Field notes · Folio 3</p>
+          <p class="journal-title">The surveyor's journal</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Field journal sections">
+          <button type="button" id="tabSurvey" class="tab is-active" role="tab" aria-selected="true" aria-controls="panelSurvey" tabindex="0">Survey</button>
+          <button type="button" id="tabGazetteer" class="tab" role="tab" aria-selected="false" aria-controls="panelGazetteer" tabindex="-1">Gazetteer</button>
+          <button type="button" id="tabJournal" class="tab" role="tab" aria-selected="false" aria-controls="panelJournal" tabindex="-1">Journal</button>
+        </div>
+
+        <div class="journal-body">
+          <section id="panelSurvey" class="tab-panel" role="tabpanel" aria-labelledby="tabSurvey">
+            <p class="region-kicker" id="regionKicker">Region · Highland</p>
+            <h2 class="region-title" id="regionName">The Cinder Peaks</h2>
+            <p class="region-lede" id="regionLede"></p>
+
+            <dl class="region-facts">
+              <div>
+                <dt>Resources</dt>
+                <dd id="regionResources"></dd>
+              </div>
+              <div>
+                <dt>Approach</dt>
+                <dd id="regionApproach"></dd>
+              </div>
+            </dl>
+
+            <div class="note-block">
+              <label for="regionNote">Surveyor's note</label>
+              <textarea id="regionNote" rows="4" maxlength="260" placeholder="Record a landmark, a change in the weather, or a word of warning."></textarea>
+              <div class="note-footer">
+                <span class="note-status" id="noteStatus" aria-live="polite"></span>
+                <button type="button" id="saveNoteBtn" class="ink-button ink-button-small">Enter in journal</button>
+              </div>
+            </div>
+
+            <div class="navigation-card">
+              <div class="nav-compass-wrap">
+                <svg class="nav-compass" viewBox="0 0 100 100" aria-hidden="true">
+                  <circle cx="50" cy="50" r="46" fill="#ead9b8" stroke="#6f5b3e" stroke-width="1"/>
+                  <circle cx="50" cy="50" r="37" fill="none" stroke="#8a7453" stroke-width=".6" stroke-dasharray="2 3"/>
+                  <path d="M50 8 L50 92 M8 50 L92 50 M20 20 L80 80 M80 20 L20 80" stroke="#907a59" stroke-width=".45" opacity=".65"/>
+                  <path d="M50 14 L55 45 L86 50 L55 55 L50 86 L45 55 L14 50 L45 45 Z" fill="none" stroke="#746044" stroke-width=".7"/>
+                  <g id="compassNeedle" transform="rotate(21 50 50)">
+                    <path d="M50 18 L55 50 L50 56 L45 50 Z" fill="#8b4b30" stroke="#5f3322" stroke-width=".6"/>
+                    <path d="M50 82 L45 50 L50 44 L55 50 Z" fill="#42665a" stroke="#2e4b42" stroke-width=".6"/>
+                    <circle cx="50" cy="50" r="3.2" fill="#e9d8b7" stroke="#5f4a2f" stroke-width=".8"/>
+                  </g>
+                  <text x="50" y="6" text-anchor="middle" class="nav-letter">N</text>
+                  <text x="96" y="53" text-anchor="middle" class="nav-letter">E</text>
+                  <text x="50" y="99" text-anchor="middle" class="nav-letter">S</text>
+                  <text x="4" y="53" text-anchor="middle" class="nav-letter">W</text>
+                </svg>
+              </div>
+              <div class="nav-copy">
+                <p class="nav-kicker">From survey camp</p>
+                <strong id="navTarget">Cinder Peaks</strong>
+                <p class="nav-values"><span id="bearingValue">NNE 013°</span><span class="nav-sep">·</span><span id="distanceValue">24.6 leagues</span></p>
+              </div>
+            </div>
+          </section>
+
+          <section id="panelGazetteer" class="tab-panel" role="tabpanel" aria-labelledby="tabGazetteer" hidden>
+            <p class="region-kicker">Index of places</p>
+            <h2 class="region-title">The gazetteer</h2>
+            <p class="panel-intro">Every named shore, wood and upland on the chart, with the notes of the first survey.</p>
+            <label class="search-label" for="gazetteerSearch">Find a place</label>
+            <div class="search-row">
+              <input type="search" id="gazetteerSearch" placeholder="Region, resource or landmark" autocomplete="off">
+              <span class="search-mark" aria-hidden="true">⌕</span>
+            </div>
+            <p class="gazetteer-count" id="gazetteerCount" aria-live="polite">5 places</p>
+            <div class="gazetteer-list" id="gazetteerList"></div>
+          </section>
+
+          <section id="panelJournal" class="tab-panel" role="tabpanel" aria-labelledby="tabJournal" hidden>
+            <p class="region-kicker">Field record</p>
+            <h2 class="region-title">Expedition journal</h2>
+
+            <form class="waypoint-form" id="waypointForm" novalidate hidden>
+              <p class="form-kicker">New marker</p>
+              <label for="waypointName">Name this place</label>
+              <input type="text" id="waypointName" name="waypointName" maxlength="36" autocomplete="off" placeholder="e.g. Keeper's Landing">
+              <p class="form-coords" id="waypointCoords"></p>
+              <p class="form-error" id="waypointError" aria-live="assertive"></p>
+              <div class="form-actions">
+                <button type="submit" class="ink-button">Set marker</button>
+                <button type="button" id="cancelWaypoint" class="text-button">Cancel</button>
+              </div>
+            </form>
+
+            <div class="waypoint-block">
+              <div class="block-head">
+                <h3>Waypoints</h3>
+                <span id="waypointCount" class="block-count">0 marked</span>
+              </div>
+              <ul class="waypoint-list" id="waypointList"></ul>
+              <p class="empty-note" id="waypointEmpty">No markers yet. Plant one from the chart controls above.</p>
+            </div>
+
+            <div class="log-block">
+              <div class="block-head">
+                <h3>Expedition log</h3>
+                <button type="button" id="clearLogBtn" class="text-button" disabled>Clear</button>
+              </div>
+              <ol class="expedition-log" id="expeditionLog"></ol>
+              <p class="empty-note" id="logEmpty">The log is waiting for its first entry.</p>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="colophon">
+      <span>The Hydrographic Office of Imaginary Places</span>
+      <span class="colophon-line" aria-hidden="true"></span>
+      <span>All coasts surveyed by hand · all errors left in ink</span>
+    </footer>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
