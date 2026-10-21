@@ -1568,3 +1568,23 @@ h1 {
     scroll-behavior: auto !important;
   }
 }
+
+@media print {
+  body * { visibility: hidden; }
+  .map-viewport, .map-viewport * { visibility: visible; }
+  .gazetteer, .gazetteer * { visibility: visible; }
+  .expedition-log, .expedition-log * { visibility: visible; }
+  .map-viewport, .gazetteer, .expedition-log {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 20mm;
+    background: white;
+    box-shadow: none;
+    border: 2px solid var(--ink);
+    color: var(--ink);
+  }
+  .controls, .nav-compass, .status-bar { display: none; }
+  .desk { border: none; box-shadow: none; }
+}
